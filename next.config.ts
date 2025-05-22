@@ -1,7 +1,10 @@
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // أي إعدادات أخرى هنا...
+
+  // إضافة matcher للمسارات التي تتطلب حماية
+
 };
 
 export default nextConfig;
