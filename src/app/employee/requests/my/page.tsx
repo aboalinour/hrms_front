@@ -1,6 +1,6 @@
-// src/app/employee/requests/my/page.tsx
+"use client";
 
-'use client'
+// src/app/employee/requests/my/page.tsx
 
 import { useState } from 'react'
 import LeaveRequestsTab from './components/LeaveRequestsTab'

@@ -1,3 +1,5 @@
+"use client";
+
 import EmployeeTable from './components/UserTable'
 
 export default function EmployeesPage() {
