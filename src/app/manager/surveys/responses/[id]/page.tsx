@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import api from "@/lib/axios"; // ✅ تم الاستبدال هنا
+import api from "@/lib/axios";
 
 export default function SurveyResponsesPage() {
   const { id } = useParams();
@@ -23,6 +23,54 @@ export default function SurveyResponsesPage() {
 
     fetchResponses();
   }, [id]);
+
+  const renderAnswer = (value: string, type: string, fileUrl?: string) => {
+    if (type === "file" && fileUrl) {
+      return (
+        <div className="space-y-2 mt-1">
+          <p className="text-gray-700 font-semibold">📌 الإجابة:</p>
+          <a
+            href={fileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline hover:text-blue-800"
+          >
+            📎 فتح الملف في نافذة جديدة
+          </a>
+        </div>
+      );
+    }
+
+    if (type === "multi_choice" && value.startsWith("[")) {
+      try {
+        const choices = JSON.parse(value);
+        return (
+          <div className="mt-1">
+            <p className="text-gray-700 font-semibold">📌 الإجابة:</p>
+            <ul className="list-disc list-inside text-gray-800 mt-1">
+              {choices.map((choice: string, index: number) => (
+                <li key={index}>{choice}</li>
+              ))}
+            </ul>
+          </div>
+        );
+      } catch {
+        return <p className="text-gray-800">📌 الإجابة: {value}</p>;
+      }
+    }
+
+    if (type === "boolean") {
+      return (
+        <p className="text-gray-800">
+          📌 الإجابة: {value === "true" ? "نعم ✅" : "لا ❌"}
+        </p>
+      );
+    }
+
+    return (
+      <p className="text-gray-800 whitespace-pre-line">📌 الإجابة: {value}</p>
+    );
+  };
 
   if (error)
     return <div className="text-red-500 text-center mt-6">{error}</div>;
@@ -46,9 +94,7 @@ export default function SurveyResponsesPage() {
               <p className="text-gray-900">{answer.question?.text}</p>
             </div>
 
-            <div>
-              {renderAnswer(answer.answer, answer.question?.type, answer.file)}
-            </div>
+            <div>{renderAnswer(answer.answer, answer.question?.type, answer.file)}</div>
           </div>
         ))}
       </div>
@@ -62,53 +108,5 @@ export default function SurveyResponsesPage() {
         </Link>
       </div>
     </div>
-  );
-}
-
-function renderAnswer(value: string, type: string, fileUrl?: string) {
-  if (type === "file" && fileUrl) {
-    return (
-      <div className="space-y-2 mt-1">
-        <p className="text-gray-700 font-semibold">📌 الإجابة:</p>
-        <a
-          href={fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 underline hover:text-blue-800"
-        >
-          📎 فتح الملف في نافذة جديدة
-        </a>
-      </div>
-    );
-  }
-
-  if (type === "multi_choice" && value.startsWith("[")) {
-    try {
-      const choices = JSON.parse(value);
-      return (
-        <div className="mt-1">
-          <p className="text-gray-700 font-semibold">📌 الإجابة:</p>
-          <ul className="list-disc list-inside text-gray-800 mt-1">
-            {choices.map((choice: string, index: number) => (
-              <li key={index}>{choice}</li>
-            ))}
-          </ul>
-        </div>
-      );
-    } catch {
-      return <p className="text-gray-800">📌 الإجابة: {value}</p>;
-    }
-  }
-
-  if (type === "boolean") {
-    return (
-      <p className="text-gray-800">
-        📌 الإجابة: {value === "true" ? "نعم ✅" : "لا ❌"}
-      </p>
-    );
-  }
-
-  return (
-    <p className="text-gray-800 whitespace-pre-line">📌 الإجابة: {value}</p>
   );
 }
