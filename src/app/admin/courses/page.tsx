@@ -1,6 +1,8 @@
+'use client';
+export const dynamic = 'force-dynamic';
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 
@@ -16,51 +18,40 @@ interface Course {
   created_at: string;
 }
 
+const fetcher = (url: string) =>
+  api.get<{ data: Course[] }>(url).then((res) => res.data.data);
+
 export default function CourseTable() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await api.get<{ data: Course[] }>("/course");
-        setCourses(response.data.data);
-      } catch (err) {
-        console.error(err);
-        setError("فشل في جلب البيانات");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCourses();
-  }, []);
+  const {
+    data: courses = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<Course[]>("/course", fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
 
   const handleEdit = (id: number) => router.push(`/admin/courses/edit/${id}`);
+  const handleAdd = () => router.push("/admin/courses/create");
 
   const handleDelete = async (id: number) => {
     if (!confirm("هل أنت متأكد من حذف هذه الدورة؟")) return;
 
     try {
       await api.delete(`/course/${id}`);
-      setCourses((prev) => prev.filter((course) => course.id !== id));
+      mutate(); // إعادة تحميل البيانات بعد الحذف
     } catch (err) {
       console.error(err);
       alert("فشل في حذف الدورة");
     }
   };
 
-  const handleAdd = () => {
-    router.push("/admin/courses/create");
-  };
-
   return (
     <div className="bg-white rounded-lg shadow-md p-6 max-w-7xl mx-auto">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">
-        قائمة الدورات
-      </h2>
+      <h2 className="text-xl font-semibold text-gray-800 mb-4">قائمة الدورات</h2>
 
       <button
         onClick={handleAdd}
@@ -69,10 +60,10 @@ export default function CourseTable() {
         إضافة دورة جديدة
       </button>
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-center text-gray-500">جارٍ تحميل البيانات...</p>
       ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
+        <p className="text-center text-red-500">فشل في جلب البيانات</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full table-auto text-right border-separate border-spacing-0">
@@ -92,9 +83,7 @@ export default function CourseTable() {
                     <td className="px-6 py-3">{course.name}</td>
                     <td className="px-6 py-3">{course.location}</td>
                     <td className="px-6 py-3">{course.instructor}</td>
-                    <td className="px-6 py-3">
-                      {course.available ? "نعم" : "لا"}
-                    </td>
+                    <td className="px-6 py-3">{course.available ? "نعم" : "لا"}</td>
                     <td className="px-6 py-3">
                       <div className="flex gap-6 justify-end">
                         <button

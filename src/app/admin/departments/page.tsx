@@ -1,6 +1,8 @@
+'use client';
+export const dynamic = 'force-dynamic';
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 
@@ -10,45 +12,35 @@ interface Department {
   manager: string | null;
 }
 
+const fetcher = (url: string) =>
+  api.get<{ data: Department[] }>(url).then((res) => res.data.data);
+
 export default function DepartmentTable() {
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchDepartments = async () => {
-      try {
-        const response = await api.get<{ data: Department[] }>("/departments");
-        setDepartments(response.data.data);
-      } catch (err) {
-        console.error(err);
-        setError("فشل في جلب البيانات");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const {
+    data: departments = [],
+    error,
+    isLoading,
+    mutate,
+  } = useSWR<Department[]>("/departments", fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
 
-    fetchDepartments();
-  }, []);
-
-  const handleEdit = (id: number) =>
-    router.push(`/admin/departments/edit/${id}`);
+  const handleEdit = (id: number) => router.push(`/admin/departments/edit/${id}`);
+  const handleAdd = () => router.push("/admin/departments/create");
 
   const handleDelete = async (id: number) => {
     if (!confirm("هل أنت متأكد من حذف هذا القسم؟")) return;
 
     try {
       await api.delete(`/departments/${id}`);
-      setDepartments((prev) => prev.filter((dept) => dept.id !== id));
+      mutate(); // إعادة تحميل البيانات بعد الحذف
     } catch (err) {
       console.error(err);
       alert("فشل في حذف القسم");
     }
-  };
-
-  const handleAdd = () => {
-    router.push("/admin/departments/create");
   };
 
   return (
@@ -63,10 +55,10 @@ export default function DepartmentTable() {
         </button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <p className="text-center text-gray-500">جارٍ تحميل البيانات...</p>
       ) : error ? (
-        <p className="text-center text-red-500">{error}</p>
+        <p className="text-center text-red-500">فشل في جلب البيانات</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white border rounded-lg text-right text-sm">
@@ -80,21 +72,14 @@ export default function DepartmentTable() {
             <tbody>
               {departments.length > 0 ? (
                 departments.map((dept) => (
-                  <tr
-                    key={dept.id}
-                    className="hover:bg-gray-50 transition border-b"
-                  >
+                  <tr key={dept.id} className="hover:bg-gray-50 transition border-b">
                     <td className="px-6 py-4">{dept.name}</td>
-                    <td className="px-6 py-4">
-                      {dept.manager ?? "لا يوجد مدير"}
-                    </td>
+                    <td className="px-6 py-4">{dept.manager ?? "لا يوجد مدير"}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-row-reverse gap-4">
                         <button
                           onClick={() =>
-                            router.push(
-                              `/admin/departments/${dept.id}/employees`
-                            )
+                            router.push(`/admin/departments/${dept.id}/employees`)
                           }
                           className="text-green-600 hover:underline font-medium"
                         >
@@ -118,10 +103,7 @@ export default function DepartmentTable() {
                 ))
               ) : (
                 <tr>
-                  <td
-                    colSpan={3}
-                    className="text-center text-gray-500 py-6 font-medium"
-                  >
+                  <td colSpan={3} className="text-center text-gray-500 py-6 font-medium">
                     لا توجد بيانات لعرضها
                   </td>
                 </tr>

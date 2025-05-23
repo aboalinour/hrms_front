@@ -1,13 +1,10 @@
-//src\app\admin\requests\components\RequestRow.tsx
-import { notFound } from 'next/navigation';
-import dayjs from 'dayjs';
-import api from '@/lib/axios';
-interface RequestDetailsProps {
-  params: {
-    type: string;
-    id: string;
-  };
-}
+// src/app/admin/requests/components/RequestDetailsPage.tsx
+"use client";
+
+import useSWR from "swr";
+import { notFound, useParams } from "next/navigation";
+import dayjs from "dayjs";
+import api from "@/lib/axios";
 
 interface RequestData {
   id: string;
@@ -22,27 +19,34 @@ interface RequestData {
   reason?: string;
   comment?: string;
   attachments?: { id: string; file_name: string; url: string }[];
-  // أضف أي بيانات إضافية تحتاجها هنا
 }
 
-export default async function RequestDetailsPage({ params }: RequestDetailsProps) {
+const fetcher = (url: string) => api.get(url).then((res) => res.data);
+
+export default function RequestDetailsPage() {
+  const params = useParams() as { type: string; id: string };
   const { type, id } = params;
 
-  let requestData: RequestData | null = null;
-  try {
-    const response = await api.get(`/${type}-requests/${id}`);
-    requestData = response.data;
-  } catch (error) {
-    console.error('Failed to fetch request details', error);
+  const {
+    data: requestData,
+    error,
+    isLoading,
+  } = useSWR<RequestData>(`/${type}-requests/${id}`, fetcher, {
+    revalidateOnFocus: false,
+    shouldRetryOnError: false,
+  });
+
+  if (error) {
+    console.error("فشل في جلب تفاصيل الطلب", error);
     notFound();
   }
 
-  if (!requestData) {
-    notFound();
+  if (isLoading || !requestData) {
+    return <div className="p-6 text-center">جاري تحميل البيانات...</div>;
   }
 
   const displayName =
-    type === 'course'
+    type === "course"
       ? requestData.course_name || requestData.custom_course_title
       : requestData.subtype || requestData.type;
 
@@ -59,11 +63,12 @@ export default async function RequestDetailsPage({ params }: RequestDetailsProps
       </div>
 
       <div className="mb-4">
-        <strong>التاريخ:</strong> {dayjs(requestData.created_at).format('YYYY-MM-DD')}
+        <strong>التاريخ:</strong>{" "}
+        {dayjs(requestData.created_at).format("YYYY-MM-DD")}
       </div>
 
       <div className="mb-4">
-        <strong>المستخدم:</strong> {requestData.user_name || 'غير معروف'}
+        <strong>المستخدم:</strong> {requestData.user_name || "غير معروف"}
       </div>
 
       {requestData.reason && (
@@ -84,7 +89,12 @@ export default async function RequestDetailsPage({ params }: RequestDetailsProps
           <ul className="list-disc list-inside">
             {requestData.attachments.map((att) => (
               <li key={att.id}>
-                <a href={att.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                <a
+                  href={att.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline"
+                >
                   {att.file_name}
                 </a>
               </li>

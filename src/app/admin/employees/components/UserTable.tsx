@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import useSWR from "swr";
 import { useRouter } from "next/navigation";
 import api from "@/lib/axios";
 
@@ -19,26 +19,14 @@ const STATUS_MAP: Record<User["status"], { label: string; classes: string }> = {
   resigned: { label: "مستقيل", classes: "bg-red-100 text-red-700" },
 };
 
+const fetcher = (url: string) => api.get(url).then(res => res.data.data);
+
 export default function UserTable() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await api.get<{ data: User[] }>("/user");
-        setUsers(response.data.data);
-      } catch (err) {
-        console.error(err);
-        setError("فشل في جلب البيانات");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUsers();
-  }, []);
+  const { data: users = [], error, isLoading, mutate } = useSWR<User[]>("/user", fetcher, {
+    revalidateOnFocus: false, // لمنع إعادة الطلب عند العودة للصفحة
+  });
 
   const handleAdd = () => router.push("/admin/employees/create");
   const handleEdit = (id: number) => router.push(`/admin/employees/edit/${id}`);
@@ -48,7 +36,7 @@ export default function UserTable() {
 
     try {
       await api.delete(`/user/${id}`);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      mutate(); // إعادة تحميل البيانات تلقائيًا بعد الحذف
     } catch (err) {
       console.error(err);
       alert("فشل في حذف المستخدم");
@@ -57,7 +45,6 @@ export default function UserTable() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* العنوان وزر الإضافة */}
       <div className="flex justify-between items-center mb-6">
         <button
           onClick={handleAdd}
@@ -67,11 +54,10 @@ export default function UserTable() {
         </button>
       </div>
 
-      {/* تحميل أو خطأ */}
-      {loading ? (
+      {isLoading ? (
         <div className="text-center text-gray-500">جارٍ تحميل البيانات...</div>
       ) : error ? (
-        <div className="text-center text-red-500">{error}</div>
+        <div className="text-center text-red-500">فشل في جلب البيانات</div>
       ) : (
         <div className="overflow-x-auto bg-white shadow-md rounded-lg">
           <table className="w-full text-right text-sm">
