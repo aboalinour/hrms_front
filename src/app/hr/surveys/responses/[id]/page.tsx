@@ -1,28 +1,20 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import api from "@/lib/axios"; // ✅ استخدام API الموحد
 
 export default function SurveyResponsesPage() {
   const { id } = useParams();
-  const [responses, setResponses] = useState<any[]>([]); // تعديل هنا لتخزين جميع الإجابات
+  const [responses, setResponses] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/survey-responses?survey_id=${id}`, // استخدام query parameter لعرض إجابات الاستبيان
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              Accept: "application/json",
-            },
-          }
-        );
-        setResponses(res.data.data); // تخزين الإجابات
+        const res = await api.get(`/survey-responses?survey_id=${id}`);
+        setResponses(res.data.data);
       } catch (err) {
         console.error("خطأ في جلب الإجابات:", err);
         setError("حدث خطأ أثناء جلب الإجابات.");
@@ -38,9 +30,7 @@ export default function SurveyResponsesPage() {
 
   return (
     <div className="p-6 max-w-3xl mx-auto bg-white rounded-lg shadow-md">
-      <h1 className="text-2xl font-bold text-gray-800 mb-4">
-        إجابات الاستبيان
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-800 mb-4">إجابات الاستبيان</h1>
 
       {responses.map((response: any) => (
         <div
@@ -88,9 +78,10 @@ export default function SurveyResponsesPage() {
 // ⭐️ دالة لعرض الإجابة حسب نوع السؤال
 function renderAnswer(value: string, type: string) {
   if (type === "file" && value) {
+    const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
     return (
       <a
-        href={`http://127.0.0.1:8000/storage/${value}`}
+        href={`${backendURL}storage/${value}`}
         target="_blank"
         rel="noopener noreferrer"
         className="text-blue-600 hover:text-blue-800 underline"

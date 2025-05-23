@@ -1,6 +1,5 @@
 'use client';
 export const dynamic = 'force-dynamic';
-"use client";
 
 import useSWR from "swr";
 import { useRouter } from "next/navigation";

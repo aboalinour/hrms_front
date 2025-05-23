@@ -14,7 +14,7 @@ export default function SurveyResponsesPage() {
     const fetchResponses = async () => {
       try {
         const res = await axios.get(
-          `http://127.0.0.1:8000/api/survey-responses?survey_id=${id}`, // استخدام query parameter لعرض إجابات الاستبيان
+          `http:/api/survey-responses?survey_id=${id}`, // استخدام query parameter لعرض إجابات الاستبيان
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("token")}`,

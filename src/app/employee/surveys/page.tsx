@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Link from "next/link";
+import api from "@/lib/axios"; // ✅ استخدام النسخة المُعدلة من axios
 
 export default function SurveysPage() {
   const [surveys, setSurveys] = useState([]);
@@ -11,12 +11,7 @@ export default function SurveysPage() {
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/api/surveys", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            Accept: "application/json",
-          },
-        });
+        const response = await api.get("/surveys"); // ✅ بدون الحاجة لكتابة full URL
         setSurveys(response.data.data);
       } catch (err) {
         console.error("خطأ في جلب الاستبيانات:", err);

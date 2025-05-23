@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import api from "@/lib/axios"; // ✅ استخدام axios المعد مسبقًا
 
 export default function SurveyResponsesPage() {
   const { id } = useParams();
@@ -13,15 +13,7 @@ export default function SurveyResponsesPage() {
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/survey-responses/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              Accept: "application/json",
-            },
-          }
-        );
+        const res = await api.get(`/survey-responses/${id}`);
         setResponse(res.data.data);
       } catch (err) {
         console.error("خطأ في جلب الإجابات:", err);
@@ -75,14 +67,17 @@ export default function SurveyResponsesPage() {
 
 // ⭐️ دالة لعرض الإجابة بشكل مناسب حسب نوع السؤال
 function renderAnswer(value: string, type: string, fileUrl?: string) {
-  if (type === "file" && fileUrl) {
-    const isPDF = fileUrl.toLowerCase().endsWith(".pdf");
+  const backendURL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+  if (type === "file" && fileUrl) {
+    const fullUrl = fileUrl.startsWith("http")
+      ? fileUrl
+      : `${backendURL}${fileUrl}`;
     return (
       <div className="space-y-2 mt-1">
         <p className="text-gray-700 font-semibold">📌 الإجابة:</p>
         <a
-          href={fileUrl}
+          href={fullUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 underline hover:text-blue-800"

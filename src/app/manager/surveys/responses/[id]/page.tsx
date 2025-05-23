@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import api from "@/lib/axios"; // ✅ تم الاستبدال هنا
 
 export default function SurveyResponsesPage() {
   const { id } = useParams();
@@ -13,15 +13,7 @@ export default function SurveyResponsesPage() {
   useEffect(() => {
     const fetchResponses = async () => {
       try {
-        const res = await axios.get(
-          `http://127.0.0.1:8000/api/survey-responses/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("token")}`,
-              Accept: "application/json",
-            },
-          }
-        );
+        const res = await api.get(`/survey-responses/${id}`);
         setResponse(res.data.data);
       } catch (err) {
         console.error("خطأ في جلب الإجابات:", err);
@@ -73,11 +65,8 @@ export default function SurveyResponsesPage() {
   );
 }
 
-// ⭐️ دالة لعرض الإجابة بشكل مناسب حسب نوع السؤال
 function renderAnswer(value: string, type: string, fileUrl?: string) {
   if (type === "file" && fileUrl) {
-    const isPDF = fileUrl.toLowerCase().endsWith(".pdf");
-
     return (
       <div className="space-y-2 mt-1">
         <p className="text-gray-700 font-semibold">📌 الإجابة:</p>

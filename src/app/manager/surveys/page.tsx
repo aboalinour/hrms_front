@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import axios from "axios";
 import Link from "next/link";
+import api from "@/lib/axios"; // ✅ استخدم ملف axios الموحد
 
 export default function SurveysPage() {
   const [surveys, setSurveys] = useState([]);
@@ -11,12 +11,7 @@ export default function SurveysPage() {
   useEffect(() => {
     const fetchSurveys = async () => {
       try {
-        const response = await axios.get("http://127.0.0.1:8000/api/surveys", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-            Accept: "application/json",
-          },
-        });
+        const response = await api.get("/surveys"); // ✅ استخدام المسار النسبي فقط
         setSurveys(response.data.data);
       } catch (err) {
         console.error("خطأ في جلب الاستبيانات:", err);
@@ -60,7 +55,7 @@ export default function SurveysPage() {
                 ) : (
                   <span
                     className="text-sm text-gray-400 cursor-not-allowed"
-                    title="لا يمكنك الإجابة أكثر من مرة على الإستبيان"
+                    title="لا يمكنك الإجابة أكثر من مرة على الاستبيان"
                   >
                     ابدأ الإجابة على الاستبيان →
                   </span>
