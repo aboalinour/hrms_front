@@ -1,7 +1,4 @@
-// src/app/admin/components/layout.tsx
 "use client";
-
-import React from "react";
 
 interface AdminDashboardLayoutProps {
   children: React.ReactNode;
@@ -17,12 +14,12 @@ export default function AdminDashboardLayout({
   footer,
 }: AdminDashboardLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-gray-100 text-right w-full">
-      <div className="transition-all duration-300">{sidebar}</div>
+    <div className="flex min-h-screen w-full bg-gray-100">
+      <aside className="w-64">{sidebar}</aside>
 
       <div className="flex-1 flex flex-col">
         {navbar}
-        <main className="flex-1 p-6 overflow-y-auto">{children}</main>
+        <main className="flex-1 p-6">{children}</main>
         {footer}
       </div>
     </div>
